@@ -16,7 +16,7 @@ amount = 19
 output = open('numbers.txt', mode='w')
 
 while first_number < last_number:
-        #スクレイピング先のurl
+    #スクレイピング先のurl
     url = 'https://takarakuji.rakuten.co.jp/backnumber/numbers3_detail/{}-{}/'.format('{0:04d}'.format(first_number), '{0:04d}'.format(first_number + amount) )
     soup = BeautifulSoup(requests.get(url).content,'html.parser')
 
@@ -27,12 +27,14 @@ while first_number < last_number:
         data.append([d.text for d in tag_tr[i].find_all('td')])
         cnt = 0;
         for j in data[i-1]:
-            #日付だけ取得しない
+            #当選番号のみを持ってくる
             if( cnt <= 1):
                 cnt += 1
                 continue
             output.write(j)
             output.write('\n')
             cnt += 1
+    
     first_number += amount
+    #アクセスを集中しないための処置
     time.sleep(1)

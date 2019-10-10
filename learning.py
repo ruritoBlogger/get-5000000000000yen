@@ -101,7 +101,7 @@ class RNN(Chain):
         chainer.reporter.report({'loss':loss},self)
         return loss
     
-    def accuracy(y, t):
+    def accuracy(self, y, t):
         correct = 0
         for j in range( 0, len(y) ):
             if y[j].size:

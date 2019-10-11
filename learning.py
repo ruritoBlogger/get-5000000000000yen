@@ -72,12 +72,6 @@ teachers, answers = data_read( 'numbers.txt', 3)
 
 # In[ ]:
 
-print(len(teachers))
-print(len(answers))
-print(teachers[0])
-print(answers[0])
-
-
 # In[68]:
 
 #ニューラルネットワークの構築。
@@ -86,8 +80,8 @@ class RNN(Chain):
     def __init__(self, n_hidden, n_output):
         super(RNN, self).__init__()
         with self.init_scope():
-            self.l1=L.LSTM(None, n_hidden)
-            self.l2=L.Linear(None, n_output)
+            self.l1=L.LSTM(None, n_hidden).to_gpu()
+            self.l2=L.Linear(None, n_output).to_gpu()
         
     def reset_state(self):
         self.l1.reset_state()
@@ -165,9 +159,9 @@ optimizer.setup(model)
 train, test = chainer.datasets.split_dataset_random(data, int(N * 0.8))
 train_iter = chainer.iterators.SerialIterator(train, n_batchsize, shuffle=False)
 test_iter = chainer.iterators.SerialIterator(test, n_batchsize, repeat=False, shuffle=False)
-updater = LSTMUpdater(train_iter, optimizer, device=-1)
+updater = LSTMUpdater(train_iter, optimizer, device=0)
 trainer = training.Trainer(updater, (n_epoch, "epoch"), out="result")
-trainer.extend(extensions.Evaluator(test_iter, model, device=-1))
+trainer.extend(extensions.Evaluator(test_iter, model, device=0))
 trainer.extend(extensions.LogReport())
 trainer.extend(extensions.PrintReport( ["epoch", "main/loss", "validation/main/loss", "main/accuracy", "validation/main/accuracy", "elapsed_time"])) # エポック、学習損失、テスト損失、学習正解率、テスト正解率、経過時間
 trainer.extend(extensions.PlotReport(['main/loss', 'val/main/loss'], x_key='epoch', file_name='loss.png'))

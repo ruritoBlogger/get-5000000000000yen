@@ -28,29 +28,31 @@ def data_read( file_name, key):
     for i in range( 0, len( f_string ) ):
         #引数を用いて正解ラベルを振り分ける
         tmp_data = np.zeros(10)
-        for j in f_string[i].replace( "\n", "" ):
-                tmp_data[int(j)] += 1
-                
-        if( i < key-1):
-                data = np.append( data, tmp_data )
-        else:
-            teachers = np.append( teachers, data )
-            answers = np.append( answers, tmp_data )
-            data = np.delete( data, 0 )
-            data = np.append( data, tmp_data )
         
-        if( (i + 2)%100 == 0 ):
-            print(i/len(f_string))
-        #if( i != 0 and i%key == 0 ):
-            #teachers = np.append( teachers, data)
-            #data = np.array([] )
-            #for j in f_string[i].replace( "\n", "" ):
+        #for j in f_string[i].replace( "\n", "" ):
                 #tmp_data[int(j)] += 1
-            #answers = np.append( answers, tmp_data )
-        #else:
-            #for j in f_string[i].replace( "\n", "" ):
-                #tmp_data[int(j)] += 1
+                
+        #if( i < key-1):
                 #data = np.append( data, tmp_data )
+        #else:
+            #teachers = np.append( teachers, data )
+            #answers = np.append( answers, tmp_data )
+            #data = np.delete( data, 0 )
+            #data = np.append( data, tmp_data )
+        
+        #if( (i + 2)%100 == 0 ):
+            #print(i/len(f_string))
+
+        if( i != 0 and i%key == 0 ):
+            teachers = np.append( teachers, data)
+            data = np.array([] )
+            for j in f_string[i].replace( "\n", "" ):
+                tmp_data[int(j)] += 1
+            answers = np.append( answers, tmp_data )
+        else:
+            for j in f_string[i].replace( "\n", "" ):
+                tmp_data[int(j)] += 1
+                data = np.append( data, tmp_data )
     
     f.close()
     
@@ -65,7 +67,7 @@ def data_read( file_name, key):
 
 # In[ ]:
 
-teachers, answers = data_read( 'numbers.txt', 5)
+teachers, answers = data_read( 'numbers.txt', 3)
 
 
 # In[ ]:
@@ -82,10 +84,10 @@ print(answers[0])
 class RNN(Chain):
     
     def __init__(self, n_hidden, n_output):
-        super(RNN, self).__init__(
-            l1=L.LSTM(None, n_hidden),
-            l2=L.Linear(None, n_output),
-        )
+        super(RNN, self).__init__()
+        with self.init_scope():
+            self.l1=L.LSTM(None, n_hidden).to_gpu(),
+            self.l2=L.Linear(None, n_output).to_gpu()
         
     def reset_state(self):
         self.l1.reset_state()
@@ -163,9 +165,9 @@ optimizer.setup(model)
 train, test = chainer.datasets.split_dataset_random(data, int(N * 0.8))
 train_iter = chainer.iterators.SerialIterator(train, n_batchsize, shuffle=False)
 test_iter = chainer.iterators.SerialIterator(test, n_batchsize, repeat=False, shuffle=False)
-updater = LSTMUpdater(train_iter, optimizer, device=-1)
+updater = LSTMUpdater(train_iter, optimizer, device=0)
 trainer = training.Trainer(updater, (n_epoch, "epoch"), out="result")
-trainer.extend(extensions.Evaluator(test_iter, model, device=-1))
+trainer.extend(extensions.Evaluator(test_iter, model, device=0))
 trainer.extend(extensions.LogReport())
 trainer.extend(extensions.PrintReport( ["epoch", "main/loss", "validation/main/loss", "main/accuracy", "validation/main/accuracy", "elapsed_time"])) # エポック、学習損失、テスト損失、学習正解率、テスト正解率、経過時間
 trainer.extend(extensions.PlotReport(['main/loss', 'val/main/loss'], x_key='epoch', file_name='loss.png'))

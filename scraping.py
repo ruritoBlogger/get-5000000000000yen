@@ -7,7 +7,7 @@ import time
 #持ってくるナンバーズ3の過去のデータ
 #first_dataが1であれば1回目から取ってくる
 #last_dataが5020であれば5020回目まで取ってくる
-first_number = 1
+first_number = 280
 last_number = 5280
 
 #一回辺りに取ってくる量

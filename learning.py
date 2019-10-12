@@ -28,30 +28,30 @@ def data_read( file_name, key):
         #引数を用いて正解ラベルを振り分ける
         tmp_data = np.zeros(10)
         
-        #for j in f_string[i].replace( "\n", "" ):
-                #tmp_data[int(j)] += 1
+        for j in f_string[i].replace( "\n", "" ):
+                tmp_data[int(j)] += 1
                 
-        #if( i < key-1):
-                #data = np.append( data, tmp_data )
-        #else:
-            #teachers = np.append( teachers, data )
-            #answers = np.append( answers, tmp_data )
-            #data = np.delete( data, 0 )
-            #data = np.append( data, tmp_data )
-        
-        #if( (i + 2)%100 == 0 ):
-            #print(i/len(f_string))
-
-        if( i != 0 and i%key == 0 ):
-            teachers = np.append( teachers, data)
-            data = np.array([] )
-            for j in f_string[i].replace( "\n", "" ):
-                tmp_data[int(j)] += 1
-            answers = np.append( answers, tmp_data )
-        else:
-            for j in f_string[i].replace( "\n", "" ):
-                tmp_data[int(j)] += 1
+        if( i < key-1):
                 data = np.append( data, tmp_data )
+        else:
+            teachers = np.append( teachers, data )
+            answers = np.append( answers, tmp_data )
+            data = np.delete( data, 0 )
+            data = np.append( data, tmp_data )
+        
+        if( (i + 2)%100 == 0 ):
+            print(i/len(f_string))
+
+        #if( i != 0 and i%key == 0 ):
+            #teachers = np.append( teachers, data)
+            #data = np.array([] )
+            #for j in f_string[i].replace( "\n", "" ):
+                #tmp_data[int(j)] += 1
+            #answers = np.append( answers, tmp_data )
+        #else:
+            #for j in f_string[i].replace( "\n", "" ):
+                #tmp_data[int(j)] += 1
+                #data = np.append( data, tmp_data )
     
     f.close()
     
@@ -66,7 +66,7 @@ def data_read( file_name, key):
 
 # In[ ]:
 
-teachers, answers = data_read( 'numbers.txt', 3)
+teachers, answers = data_read( 'numbers.txt', 5)
 R_accuracy = np.array([])
 R_loss = np.array([])
 # In[ ]:

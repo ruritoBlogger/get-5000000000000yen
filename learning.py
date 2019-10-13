@@ -67,8 +67,8 @@ def data_read( file_name, key):
 # In[ ]:
 
 teachers, answers = data_read( 'numbers.txt', 3)
-
-
+R_accuracy = np.array([])
+R_loss = np.array([])
 # In[ ]:
 
 # In[68]:
@@ -95,6 +95,8 @@ class RNN(Chain):
         accuracy = self.accuracy(data, t)
         chainer.reporter.report({'accuracy':accuracy},self)
         chainer.reporter.report({'loss':loss},self)
+        R_accuracy = np.append( R_accuracy, accuracy )
+        R_loss = np.append( R_loss, loss )
         return loss
     
     def accuracy(self, y, t):
@@ -160,7 +162,7 @@ n_epoch = 1000
 n_hidden = 10
 n_output = 10
 model = RNN(n_hidden, n_output)
-optimizer = optimizers.Adam()
+optimizer = optimizers.Adam(lr=0.005)
 optimizer.setup(model)
 
 #学習用データと検証用データに分ける
@@ -176,3 +178,10 @@ trainer.extend(extensions.PlotReport(['main/loss', 'val/main/loss'], x_key='epoc
 trainer.extend(extensions.PlotReport(['main/accuracy', 'val/main/accuracy'], x_key='epoch', file_name='accuracy.png'))
 trainer.run()
 
+from matplotlib import pyplot as plt
+fig, ax = plt.subplots()
+ax.plot(y, R_accuracy)
+plt.savefig('accuracy.png') 
+
+ax.plot(y, R_loss)
+plt.savefig('loss.png') 

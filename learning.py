@@ -12,7 +12,7 @@ from chainer.training import extensions
 from chainer.datasets import tuple_dataset
 from chainer import optimizers, Chain, dataset, datasets, iterators
 import numpy as np
-
+from matplotlib import pyplot as plt
 
 # In[82]:
 
@@ -31,14 +31,13 @@ def data_read( file_name, key):
         for j in f_string[i].replace( "\n", "" ):
                 tmp_data[int(j)] += 1
                 
-        if( i < key-1):
+        if( i < key):
                 data = np.append( data, tmp_data )
         else:
             teachers = np.append( teachers, data )
             answers = np.append( answers, tmp_data )
             data = np.delete( data, 0 )
             data = np.append( data, tmp_data )
-        
         if( (i + 2)%100 == 0 ):
             print(i/len(f_string))
 
@@ -57,25 +56,24 @@ def data_read( file_name, key):
     
     teachers = teachers.astype( np.float32 )
     answers = answers.astype( np.float32 )
-    
-    teachers = np.reshape( teachers, ( int( len( teachers ) / 10 / key ), key, 10 ) )
-    
-    answers = np.reshape( answers, ( int( len( answers ) / 10 ) , 10 ) )
     return teachers, answers
 
 
 # In[ ]:
 
-teachers, answers = data_read( 'numbers.txt', 5)
-R_accuracy = np.array([])
-R_loss = np.array([])
+teachers, answers = data_read( 'numbers.txt', 10)
 # In[ ]:
+print(len(teachers)/10)
+#def remake_data( key ):
 
 # In[68]:
 
 #ニューラルネットワークの構築。
 class RNN(Chain):
-    
+ 
+    R_accuracy = np.array([])
+    R_loss = np.array([])
+   
     def __init__(self, n_hidden, n_output):
         super(RNN, self).__init__()
         with self.init_scope():
@@ -95,8 +93,8 @@ class RNN(Chain):
         accuracy = self.accuracy(data, t)
         chainer.reporter.report({'accuracy':accuracy},self)
         chainer.reporter.report({'loss':loss},self)
-        R_accuracy = np.append( R_accuracy, accuracy )
-        R_loss = np.append( R_loss, loss )
+        self.R_accuracy = np.append( self.R_accuracy, accuracy )
+        self.R_loss = np.append( self.R_loss, loss )
         return loss
     
     def accuracy(self, y, t):
@@ -123,7 +121,13 @@ class RNN(Chain):
         h3 = self.l3(h2)
         return self.l4(h3)
 
+    def print(self):
+        fig, ax = plt.subplots()
+        ax.plot(y, self.R_accuracy)
+        plt.savefig('accuracy.png') 
 
+        ax.plot(y, self.R_loss)
+        plt.savefig('loss.png') 
 # In[69]:
 
 #Updaterを拡張する
@@ -162,7 +166,7 @@ n_epoch = 1000
 n_hidden = 10
 n_output = 10
 model = RNN(n_hidden, n_output)
-optimizer = optimizers.Adam(lr=0.005)
+optimizer = optimizers.Adam()
 optimizer.setup(model)
 
 #学習用データと検証用データに分ける
@@ -178,10 +182,4 @@ trainer.extend(extensions.PlotReport(['main/loss', 'val/main/loss'], x_key='epoc
 trainer.extend(extensions.PlotReport(['main/accuracy', 'val/main/accuracy'], x_key='epoch', file_name='accuracy.png'))
 trainer.run()
 
-from matplotlib import pyplot as plt
-fig, ax = plt.subplots()
-ax.plot(y, R_accuracy)
-plt.savefig('accuracy.png') 
-
-ax.plot(y, R_loss)
-plt.savefig('loss.png') 
+model.print()

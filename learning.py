@@ -31,39 +31,41 @@ def data_read( file_name, key):
         for j in f_string[i].replace( "\n", "" ):
                 tmp_data[int(j)] += 1
                 
-        if( i < key):
-                data = np.append( data, tmp_data )
-        else:
-            teachers = np.append( teachers, data )
-            answers = np.append( answers, tmp_data )
-            data = np.delete( data, 0 )
-            data = np.append( data, tmp_data )
-        if( (i + 2)%100 == 0 ):
-            print(i/len(f_string))
-
-        #if( i != 0 and i%key == 0 ):
-            #teachers = np.append( teachers, data)
-            #data = np.array([] )
-            #for j in f_string[i].replace( "\n", "" ):
-                #tmp_data[int(j)] += 1
-            #answers = np.append( answers, tmp_data )
-        #else:
-            #for j in f_string[i].replace( "\n", "" ):
-                #tmp_data[int(j)] += 1
+        #if( i < key):
                 #data = np.append( data, tmp_data )
+        #else:
+            #teachers = np.append( teachers, data )
+            #answers = np.append( answers, tmp_data )
+            #data = np.delete( data, 0 )
+            #data = np.append( data, tmp_data )
+        #if( (i + 2)%100 == 0 ):
+            #print(i/len(f_string))
+
+        if( i != 0 and i%key == 0 ):
+            teachers = np.append( teachers, data)
+            data = np.array([] )
+            for j in f_string[i].replace( "\n", "" ):
+                tmp_data[int(j)] += 1
+            answers = np.append( answers, tmp_data )
+        else:
+            for j in f_string[i].replace( "\n", "" ):
+                tmp_data[int(j)] += 1
+                data = np.append( data, tmp_data )
     
     f.close()
     
     teachers = teachers.astype( np.float32 )
     answers = answers.astype( np.float32 )
+
+    teachers = np.reshape( teachers, ( int( len( teachers ) / 10 / key ), key, 10 ) )
+    answers = np.reshape( answers, ( int( len( answers ) / 10 ) , 10 ) )
     return teachers, answers
 
 
 # In[ ]:
 
-teachers, answers = data_read( 'numbers.txt', 10)
+teachers, answers = data_read( 'numbers.txt', 3)
 # In[ ]:
-print(len(teachers)/10)
 #def remake_data( key ):
 
 # In[68]:
@@ -113,8 +115,10 @@ class RNN(Chain):
     
     def predict(self, x):
         if train:
-            h1 = F.dropout(self.l1(x),ratio = 0.5)
-            h2 = F.dropout(self.l2(h1),ratio = 0.5)
+            #h1 = F.dropout(self.l1(x),ratio = 0.5)
+            #h2 = F.dropout(self.l2(h1),ratio = 0.5)
+            h1 = self.l1(x)
+            h2 = self.l2(h1)
         else:
             h1 = self.l1(x)
             h2 = self.l2(h1)
@@ -158,6 +162,9 @@ class LSTMUpdater(training.StandardUpdater):
 
 #　教師データのtupleを作成する
 data = list(zip(teachers, answers))
+print(len(teachers))
+print(len(answers))
+#data = tuple_dataset.TupleDataset( teachers, answers )
 N = len(data)
 n_batchsize = 30
 n_epoch = 1000

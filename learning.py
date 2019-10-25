@@ -65,6 +65,7 @@ def data_read( file_name, key):
 # In[ ]:
 
 teachers, answers = data_read( 'numbers.txt', 3)
+GPU = -1
 # In[ ]:
 #def remake_data( key ):
 
@@ -75,14 +76,23 @@ class RNN(Chain):
  
     R_accuracy = np.array([])
     R_loss = np.array([])
-   
+
     def __init__(self, n_hidden, n_output):
         super(RNN, self).__init__()
+        
         with self.init_scope():
-            self.l1=L.LSTM(None, n_hidden).to_gpu()
-            self.l2=L.LSTM(None, n_hidden).to_gpu()
-            self.l3=L.Linear(None, n_hidden).to_gpu()
-            self.l4=L.Linear(None, n_output).to_gpu()
+            if(GPU != -1):
+                self.l1=L.LSTM(None, n_hidden).to_gpu()
+                self.l2=L.LSTM(None, n_hidden).to_gpu()
+                self.l3=L.Linear(None, n_hidden).to_gpu()
+                self.l4=L.Linear(None, n_output).to_gpu()
+            else:
+                self.l1=L.LSTM(None, n_hidden)
+                self.l2=L.LSTM(None, n_hidden)
+                self.l3=L.Linear(None, n_hidden)
+                self.l4=L.Linear(None, n_output)
+            
+
         
     def reset_state(self):
         self.l1.reset_state()
@@ -127,11 +137,13 @@ class RNN(Chain):
 
     def print(self):
         fig, ax = plt.subplots()
+        y = np.arange(0,len(self.R_accuracy),1)
         ax.plot(y, self.R_accuracy)
         plt.savefig('accuracy.png') 
 
-        ax.plot(y, self.R_loss)
-        plt.savefig('loss.png') 
+        #y = np.arange(0,len(self.R_loss),1)
+        #ax2.plot(y, self.R_loss)
+        #plt.savefig('loss.png') 
 # In[69]:
 
 #Updaterを拡張する
@@ -167,7 +179,7 @@ print(len(answers))
 #data = tuple_dataset.TupleDataset( teachers, answers )
 N = len(data)
 n_batchsize = 30
-n_epoch = 1000
+n_epoch = 100
 
 #モデルを使う準備。オブジェクトを生成
 n_hidden = 10
@@ -180,9 +192,9 @@ optimizer.setup(model)
 train, test = chainer.datasets.split_dataset_random(data, int(N * 0.8))
 train_iter = chainer.iterators.SerialIterator(train, n_batchsize, shuffle=False)
 test_iter = chainer.iterators.SerialIterator(test, n_batchsize, repeat=False, shuffle=False)
-updater = LSTMUpdater(train_iter, optimizer, device=0)
+updater = LSTMUpdater(train_iter, optimizer, device=GPU)
 trainer = training.Trainer(updater, (n_epoch, "epoch"), out="result")
-trainer.extend(extensions.Evaluator(test_iter, model, device=0))
+trainer.extend(extensions.Evaluator(test_iter, model, device=GPU))
 trainer.extend(extensions.LogReport(trigger=(10, "epoch")))
 trainer.extend(extensions.PrintReport( ["epoch", "main/loss", "validation/main/loss", "main/accuracy", "validation/main/accuracy", "elapsed_time"])) # エポック、学習損失、テスト損失、学習正解率、テスト正解率、経過時間
 trainer.extend(extensions.PlotReport(['main/loss', 'val/main/loss'], x_key='epoch', file_name='loss.png'))

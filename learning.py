@@ -14,100 +14,94 @@ from chainer import optimizers, Chain, dataset, datasets, iterators
 import numpy as np
 
 
-# In[2]:
+# In[13]:
 
 def data_read( file_name, key):
-    teachers = np.array([] )
-    answers =  np.array([] )
+    teachers = []
+    answers =  []
 
     f = open( file_name, mode = "r" )
     f_string = f.readlines()
-    data = np.array([] )
-    print("test")
+    data = []
+    cnt = 0
     
     for i in range( 0, len( f_string ) ):
         #引数を用いて正解ラベルを振り分ける
-        tmp_data = np.zeros(10)
+        tmp_data = [0] * 10
         for j in f_string[i].replace( "\n", "" ):
                 tmp_data[int(j)] += 1
                
         if(False):
             if( i < key-1):
-                data = np.append( data, tmp_data )
+                data.append(tmp_data)
             else:
-                teachers = np.append( teachers, data )
-                answers = np.append( answers, tmp_data )
-                data = np.delete( data, 0 )
-                data = np.append( data, tmp_data )
+                teachers.append(data)
+                answers.append(tmp_data)
+                data.pop(0)
+                data.append(tmp_data)
         
             if( (i + 2)%100 == 0 ):
                 print(i/len(f_string))
         else:
-            if( i != 0 and i%key == 0 ):
-                teachers = np.append( teachers, data)
-                data = np.array([] )
-                for j in f_string[i].replace( "\n", "" ):
-                    tmp_data[int(j)] += 1
-                answers = np.append( answers, tmp_data )
+            if( cnt == key ):
+                cnt = 0
+                teachers.append(data)
+                data = []
+                answers.append(tmp_data)
             else:
-                for j in f_string[i].replace( "\n", "" ):
-                    tmp_data[int(j)] += 1
-                    data = np.append( data, tmp_data )
-    
+                cnt += 1
+                data.append(tmp_data)
     f.close()
     
-    teachers = teachers.astype( np.float32 )
-    answers = answers.astype( np.float32 )
+    #teachers = teachers.astype( np.float32 )
+    #answers = answers.astype( np.float32 )
+  
+    #整形
+    #teachers = np.reshape( teachers, ( int( len( teachers ) / 10 / key ), key, 10) )
+    #answers = np.reshape( answers, ( int( len( answers ) / 10 ) , 10 ) )
     
-    teachers = np.reshape( teachers, ( int( len( teachers ) / 10 / key ), key, 10 ) )
-    
-    answers = np.reshape( answers, ( int( len( answers ) / 10 ) , 10 ) )
+    data = []
+    for i in range(int( len( answers) / 10)):
+        tmp_data = []
+        tmp_teacher = []
+        for j in range(key):
+            tmp_teacher.append(teachers[i:i+10])
+        tmp_data.append(tmp_teacher)
+        tmp_data.append(answers[i:i+10])
+        #print(tmp_data)
+        break
+        #print(list(zip(teachers[i:i+1], answers[i:i+10])))
     return teachers, answers
 
 
-# In[11]:
-
-teachers, answers = data_read( 'numbers.txt', 3)
-GPU = -1
-
-
-# In[12]:
-
-print(len(teachers))
-print(len(answers))
-print(teachers[0])
-print(answers[0])
-
-
-# In[13]:
+# In[109]:
 
 #ニューラルネットワークの構築。
-class RNN(Chain):
+class CNN(Chain):
     
-    def __init__(self, n_hidden, n_output):
-        super(RNN, self).__init__()
-        with self.init_scope():
-            if(GPU == -1):
-                l1=L.LSTM(None, n_hidden)
+    def __init__(self, n_output):
+        if(GPU == -1):
+            super(CNN, self).__init__(
+                l1=L.Convolution2D(1,20,3),
                 l2=L.Linear(None, n_output)
-            else:
-                l1=L.LSTM(None, n_hidden).to_gpu()
+            )
+        else:
+            super(CNN, self).__init__(
+                l1=L.Convolution2D(1,20,3).to_gpu(),
                 l2=L.Linear(None, n_output).to_gpu()
-                
-        
-    def reset_state(self):
-        self.l1.reset_state()
+            )   
         
     def __call__(self, x, t):
         y = self.predict(x)
-        loss = F.mean_squared_error(y, t)
+        loss = F.mean_squared_error(y,t)
+        #loss = F.softmax_cross_entropy(y,t)
         data = y.data[:]
         accuracy = self.accuracy(data, t)
         chainer.reporter.report({'accuracy':accuracy},self)
         chainer.reporter.report({'loss':loss},self)
         return loss
     
-    def accuracy(y, t):
+    def accuracy(self, y, t):
         correct = 0
         for j in range( 0, len(y) ):
             if y[j].size:
@@ -119,14 +113,11 @@ class RNN(Chain):
         
     
     def predict(self, x):
-        if train:
-            h1 = F.dropout(self.l1(x),ratio = 0.5)
-        else:
-            h1 = self.l1(x)
-        return self.l2(h1)
+        h1 = F.max_pooling_2d(F.relu(self.l1(x)),2)
+        return F.softmax(self.l2(h1))
 
 
-# In[14]:
+# In[113]:
 
 #Updaterを拡張する
 from chainer import Variable, reporter
@@ -141,9 +132,15 @@ class LSTMUpdater(training.StandardUpdater):
         optimizer = self.get_optimizer("main")
         
         batch = data_iter.__next__()
-        x_batch, t_batch = chainer.dataset.concat_examples(batch, self.device)
-        
-        optimizer.target.reset_state()           
+        data = chainer.dataset.concat_examples(batch, self.device)
+        x_batch = data[:][0]
+        t_batch = data[:][1]
+        x_batch = np.array(x_batch)
+        #x_batch = x_batch[:,np.newaxis,:,:]
+        t_batch = np.array(t_batch)
+        #print(x_batch)
+        #x_batch, t_batch = chainer.dataset.concat_examples(batch, self.device)
+        #optimizer.target.reset_state()           
         optimizer.target.cleargrads()
         #loss = optimizer.target(Variable(x_batch), Variable(t_batch))
         loss = optimizer.target(x_batch, t_batch)
@@ -152,18 +149,43 @@ class LSTMUpdater(training.StandardUpdater):
         optimizer.update() 
 
 
-# In[16]:
+# In[114]:
+
+teachers, answers = data_read( 'numbers.txt', 3)
+GPU = -1
+
+
+# In[115]:
+
+print(len(teachers))
+print(len(answers))
+print(teachers[-1])
+print(answers[1])
+
+
+# In[116]:
+
+teachers = np.array(teachers)
+teachers = teachers.astype(np.float32)[:,np.newaxis,:,:]
+print(teachers.shape)
+answers = np.array(answers)
+answers = answers.astype(np.float32)
+data = tuple_dataset.TupleDataset(teachers, answers)
+
+
+# In[117]:
 
 #　教師データのtupleを作成する
-data = list(zip(teachers, answers))
+#data = list(zip(teachers, answers))
+
+#data = np.array(data)
 N = len(data)
 n_batchsize = 30
-n_epoch = 1
+n_epoch = 10
 
 #モデルを使う準備。オブジェクトを生成
-n_hidden = 10
 n_output = 10
-model = RNN(n_hidden, n_output)
+model = CNN(n_output)
 optimizer = optimizers.Adam()
 optimizer.setup(model)
 
@@ -179,31 +201,6 @@ trainer.extend(extensions.PrintReport( ["epoch", "main/loss", "validation/main/l
 trainer.extend(extensions.PlotReport(['main/loss', 'val/main/loss'], x_key='epoch', file_name='loss.png'))
 trainer.extend(extensions.PlotReport(['main/accuracy', 'val/main/accuracy'], x_key='epoch', file_name='accuracy.png'))
 trainer.run()
-
-
-# In[27]:
-
-def accuracy(y, t):
-        correct = 0
-        for j in range( 0, len(y) ):
-            if y[j].size:
-                for i in range( 0, 3 ):
-                    if( t[j][y[j].argmax()] ):
-                        correct += 1
-                    y[j][y[j].argmax()]= np.amin(y[j])
-        print(correct)
-        return correct / (len(y) * 3)
-
-y = np.array([[ 2.32572779e-02, 1.50612950e-01, -7.73513615e-02,
-            1.24777101e-01, 1.66107967e-01, 4.45912518e-02,
-            3.39158834e-03, -3.49103138e-02, 6.63672294e-03,
-           -9.04915929e-02],
-            [ 2.32572779e-02, 1.50612950e-01, -7.73513615e-02,
-            1.24777101e-01, 1.66107967e-01, 4.45912518e-02,
-            3.39158834e-03, -3.49103138e-02, 6.63672294e-03,
-           -9.04915929e-02]])
-t = np.array([[0,1,0,1,1,0,0,0,0,0],[0,1,0,1,1,0,0,0,0,0]])
-accuracy(y,t)
 
 
 # In[ ]:

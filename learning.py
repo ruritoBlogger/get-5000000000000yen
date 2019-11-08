@@ -137,10 +137,15 @@ class Learning():
             os.remove('./best.net')
         chainer.serializers.save_npz('best.net', self.model)
 
+    def load(self, x_data):
+        best_model = CNN(self.GPU, self.n_output)
+        chainer.serializers.load_npz('best.net', best_model)
+        return best_model.predict(x_data)
+
     def run(self):
 
         teachers, answers = self.data_read( 'numbers.txt', self.key_day)
-        GPU = -1
+        self.GPU = -1
 
         teachers = np.array(teachers)
         teachers = teachers.astype(np.float32)[:,np.newaxis,:,:]
@@ -153,8 +158,8 @@ class Learning():
         n_epoch = 11
 
         #モデルを使う準備。オブジェクトを生成
-        n_output = 10
-        self.model = CNN(GPU, n_output)
+        self.n_output = 10
+        self.model = CNN(self.GPU, self.n_output)
         optimizer = optimizers.Adam()
         optimizer.setup(self.model)
 
@@ -162,7 +167,7 @@ class Learning():
         train, test = chainer.datasets.split_dataset_random(data, int(N * 0.8))
         train_iter = chainer.iterators.SerialIterator(train, self.n_batchsize, shuffle=False)
         test_iter = chainer.iterators.SerialIterator(test, self.n_batchsize, repeat=False, shuffle=False)
-        updater = LSTMUpdater(train_iter, optimizer, device=GPU)
+        updater = LSTMUpdater(train_iter, optimizer, device=self.GPU)
         trainer = training.Trainer(updater, (n_epoch, "epoch"), out="result")
         #trainer.extend(extensions.Evaluator(test_iter, model, device=GPU))
         #trainer.extend(extensions.LogReport(trigger=(10, "epoch")))
@@ -182,19 +187,41 @@ class Learning():
 # ハイパーパラメータの最適化を行う
 
 # ハイパーパラメータの候補の生成
-key_list = np.arange(3,50,1)
+#key_list = np.arange(3,50,1)
+key_list = np.array([3])
 batchsize_list = np.arange(10,100,10)
 
-accuracy = 0
-cnt = 0
-# 生成した候補一つ一つで学習を回す 
-for key in key_list:
-    for batchsize in batchsize_list:
-        cnt += 1
-        learn = Learning(key, batchsize)
-        tmp = learn.run()
-        print( cnt/(len(key_list) + len(batchsize_list)) )
-        if(accuracy < tmp ):
-            accuracy = tmp
-            learn.save()
-print(accuracy)
+result = np.array([[0,0,0,0,0,0,0,0,0,0]]).astype(np.float32)
+
+# 生成した候補一つ一つで学習を回す
+for i in range(0,100):
+    cnt = 0
+    accuracy = 0
+    for key in key_list:
+        for batchsize in batchsize_list:
+            cnt += 1
+            learn = Learning(key, batchsize)
+            tmp = learn.run()
+            if(accuracy < tmp ):
+                accuracy = tmp
+                learn.save()
+
+    #これは明日用
+    #x_data = np.array([[[[1,1,0,0,0,0,1,0,0,0],[0,1,1,0,0,0,0,0,0,1],[0,1,1,0,0,0,1,0,0,0]]]]).astype(np.float32)
+
+    #これは検証用
+    x_data = np.array([[[[0,0,0,0,1,1,1,0,0,0],[1,1,0,0,0,0,1,0,0,0],[0,1,1,0,0,0,0,0,0,1]]]]).astype(np.float32)
+    
+    result += learn.load(x_data).data[:]
+    os.remove('./best.net')
+    print("実行率:" + str(i+1) + "%")
+
+result /= 10
+result = result[0]
+ans = {}
+for i in range(0,4):
+    index = np.argmax(result)
+    ans.setdefault('{0}'.format(index) ,'{:.2g}'.format(result[index] * 100) + "%")
+    result[index] = 0
+print("明日の当選番号は")
+print(ans)

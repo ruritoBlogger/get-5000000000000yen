@@ -11,7 +11,7 @@ def main():
     accuracy_picture_name = "acc.png"
 
     observer = Observer()
-    model = CNN_model()
+    updater = CNN_updater()
 
     # dotenv用の初期設定 + slackAPIの初期設定
     dotenv_path = join(dirname(__file__), '.env')
@@ -19,7 +19,7 @@ def main():
     token = os.environ.get("API_KEY")
     slack = SlackBot(token)
 
-    trainer = CNNTrainer(batch_size, epoch, slack, observer, model, useSlack, loss_picture_name, accuracy_picture_name)
+    trainer = CNNTrainer(batch_size, epoch, slack, observer, updater, useSlack, loss_picture_name, accuracy_picture_name)
 
     trainer.learn()
 

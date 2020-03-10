@@ -1,6 +1,6 @@
 class Trainer():
 
-    def __init__(self, batch_size, epoch, slack, observer, model, useSlack, loss_picture_name, acc_picture_name):
+    def __init__(self, batch_size, epoch, slack, observer, updater, useSlack, loss_picture_name, acc_picture_name):
         self.batch_size = batch_size
         self.epoch = epoch
         self.useSlack = useSlack
@@ -9,7 +9,7 @@ class Trainer():
 
         self._slack = slack
         self._observer = observer
-        self._model = model
+        self._updater = updater
 
         self.loss_list = []
         self.acc_list = []
@@ -34,9 +34,9 @@ class Trainer():
                 if( len(batch_teach) == 0 ):
                     break
 
-                self.model.update(batch_teach, batch_ans)
+                self.updater.update(batch_teach, batch_ans)
             
-            loss, accuracy = self.model.evaluate(test_teach, test_ans)
+            loss, accuracy = self.updater.evaluate(test_teach, test_ans)
 
             self.loss_list.append(loss)
             self.acc_list.append(accuracy)
@@ -61,7 +61,7 @@ class Trainer():
         plt.savefig(self.acc_picture_name)
 
     def save_model(self):
-        self.model.save()
+        self.updater.save()
 
     @property
     def slack(self):
@@ -80,9 +80,9 @@ class Trainer():
         print("please don't overwrite observer instance")
 
     @property
-    def model(self):
-        return self._model
+    def updater(self):
+        return self._updater
 
-    @model.setter
-    def model(self, model):
-        print("please don't overwrite model instance")
+    @updater.setter
+    def updater(self, updater):
+        print("please don't overwrite updater instance")

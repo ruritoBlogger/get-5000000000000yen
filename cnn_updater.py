@@ -1,27 +1,29 @@
+from cnn_model import CNN
+import chainer.functions as F
+from chainer import serializers
 
 
 class CNN_updater():
 
-    def __init__(self, file_name):
-        self.file_name = file_name
+    def __init__(self):
         self.reset()
 
     def reset(self):
         self._model = None
         self._optimizer = None
 
-    def initialize(self, use_other_model, other_model_name=""):
+    def initialize(self, is_load_other_model, other_model_name=""):
 
         self._model = CNN()
 
-        if(use_other_model):
-            self.model.load(other_model_name)
+        if(is_load_other_model):
+            serializers.load_npz(other_model_name, self.model)
 
         self.optimizer = optimizers.Adam()
         self.optimizer.setup(self.model)
 
-    def save(self, file_name):
-        serializers.save_npz(file_name, self.model)
+    def save(self, model_name):
+        serializers.save_npz(model_name, self.model)
 
     def update(self, teach, ans):
         predict = self.model.forward(teach)
@@ -32,3 +34,19 @@ class CNN_updater():
 
     def debug(self, teach):
         return self.model.debug_forward(teach)
+
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, model):
+        print("please don't overwrite model instance")
+
+    @property
+    def optimizer(self):
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, optimizer):
+        print("please don't overwrite optimizer instance")

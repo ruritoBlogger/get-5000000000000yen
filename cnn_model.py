@@ -5,7 +5,6 @@ import chainer.functions as F
 import chainer.links as L
 import numpy as np
 
-
 class CNN(Chain):
 
     def __init__(self):
@@ -19,10 +18,12 @@ class CNN(Chain):
         )
 
     def forward(self, x):
+        x = np.array(x).astype(np.float32)
+        x = x.reshape([int(x.size/x[0].size), 1, int(x[0].size/10), 10])
         h0 = F.max_pooling_2d(F.relu(self.conv0(x)), 2)
-        h1 = F.max_pooling_2d(F.relu(self.conv0(h0)), 2)
-        h2 = F.max_pooling_2d(F.relu(self.conv0(h1)), 2)
-        h3 = F.max_pooling_2d(F.relu(self.conv0(h2)), 2)
+        h1 = F.max_pooling_2d(F.relu(self.conv1(h0)), 2)
+        h2 = F.max_pooling_2d(F.relu(self.conv2(h1)), 2)
+        h3 = F.max_pooling_2d(F.relu(self.conv3(h2)), 2)
 
         h4 = self.affine1(h3)
         h5 = self.affine2(h4)
@@ -30,6 +31,8 @@ class CNN(Chain):
         return F.softmax(h5)
 
     def debug_forward(self, x):
+        x = np.array(x).astype(np.float32)
+        x = x.reshape([int(x.size/x[0].size), 1, int(x[0].size/10), 10])
         self.make_picture("before.png",x)
         
         h0 = F.max_pooling_2d(F.relu(self.conv0(x)), 2)

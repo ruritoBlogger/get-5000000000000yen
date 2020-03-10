@@ -1,4 +1,4 @@
 .ipyenb_checkpoints/
-__pychache__/
+__pycache__/
 *.png
 model.npz

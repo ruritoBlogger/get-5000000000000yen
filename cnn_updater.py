@@ -1,6 +1,7 @@
 from cnn_model import CNN
 import chainer.functions as F
 from chainer import serializers, optimizers
+import numpy as np
 
 
 class CNN_updater():
@@ -27,10 +28,35 @@ class CNN_updater():
 
     def update(self, teach, ans):
         predict = self.model.forward(teach)
-        loss_val = F.softmax_cross_entropy(predict, ans)
-        self.model.cleargrads()
-        loss_val.backward()
-        self.optimizer.update()
+        ans = np.array(ans)
+        for i in range(3):
+            tmp_ans = np.array([0] * len(ans))
+            for j in range(len(ans)):
+                tmp_ans[j] = ans[j][i]
+
+            loss_val = F.softmax_cross_entropy(predict, tmp_ans)
+            self.model.cleargrads()
+            loss_val.backward()
+            self.optimizer.update()
+
+    def evaluate(self, teach, ans):
+        predict = self.model.forward(teach)
+        ans = np.array(ans)
+        loss = 0
+        accuracy = 0
+        num = len(teach)
+
+        for i in range(3):
+            tmp_ans = np.array([0] * len(ans))
+            for j in range(len(ans)):
+                tmp_ans[j] = ans[j][i]
+
+            loss_val = F.softmax_cross_entropy(predict, tmp_ans)
+            accuracy_val = F.accuracy(predict, tmp_ans)
+            loss += loss_val.data
+            accuracy += accuracy_val.data
+
+        return loss/num, accuracy/num
 
     def debug(self, teach):
         return self.model.debug_forward(teach)

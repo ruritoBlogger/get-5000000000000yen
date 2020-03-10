@@ -10,12 +10,12 @@ class CNN(Chain):
 
     def __init__(self):
         super(CNN,self).__init__(
-            conv0 = L.Convolution2D(),
-            conv1 = L.Convolution2D(),
-            conv2 = L.Convolution2D(),
-            conv3 = L.Convolution2D(),
-            affine1 = L.Linear(),
-            affine2 = L.Linear()
+            conv0 = L.Convolution2D(1, 2, (1,2), pad=1),
+            conv1 = L.Convolution2D(2, 4, (1,2), pad=1),
+            conv2 = L.Convolution2D(4, 8, (1,2), pad=1),
+            conv3 = L.Convolution2D(8, 16, (1,2), pad=1),
+            affine1 = L.Linear(None, 1000),
+            affine2 = L.Linear(None, 10)
         )
 
     def forward(self, x):

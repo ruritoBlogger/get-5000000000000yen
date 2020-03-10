@@ -1,6 +1,6 @@
 from cnn_model import CNN
 import chainer.functions as F
-from chainer import serializers
+from chainer import serializers, optimizers
 
 
 class CNN_updater():
@@ -19,7 +19,7 @@ class CNN_updater():
         if(is_load_other_model):
             serializers.load_npz(other_model_name, self.model)
 
-        self.optimizer = optimizers.Adam()
+        self._optimizer = optimizers.Adam()
         self.optimizer.setup(self.model)
 
     def save(self, model_name):

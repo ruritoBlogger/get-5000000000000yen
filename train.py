@@ -1,4 +1,9 @@
+from cnn_updater import CNN_updater
+from cnn_observer import CNN_observer
 
+from slackbot import SlackBot
+from dotenv import load_dotenv
+from os.path import join
 
 def main():
 
@@ -11,7 +16,7 @@ def main():
     accuracy_picture_name = "acc.png"
     cnn_model_name = "model.npz"
 
-    observer = Observer()
+    observer = CNN_Observer()
     updater = CNN_updater()
 
     # dotenv用の初期設定 + slackAPIの初期設定

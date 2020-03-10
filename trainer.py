@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 class Trainer():
 
     def __init__(self, batch_size, epoch, slack, observer, updater, useSlack, loss_picture_name, acc_picture_name, cnn_model_name):
@@ -16,14 +18,15 @@ class Trainer():
         self.acc_list = []
 
     def learn(self):
-        data = self.getData("./numbers.txt")
+        data = self.observer.get_data("./numbers.txt")
         teach, ans = self.observer.transform(data)
+        
+        key = int(len(teach)*0.8)
+        train_teach = teach[:key]
+        train_ans = ans[:key]
 
-        train_teach = teach[0:len(teach)*0.8]
-        train_ans = ans[0:len(ans)*0.8]
-
-        test_teach = teach[len(teach)*0.8:]
-        test_ans = ans[len(ans)*0.8:]
+        test_teach = teach[key:]
+        test_ans = ans[key:]
 
         for j in range( self.epoch ):
 
@@ -44,7 +47,7 @@ class Trainer():
 
         self.make_picture()
         self.save_model()
-    
+
     def send_message(self, episode):
         message = ""
         message += "現在{0}エピソード\n".format(episode)

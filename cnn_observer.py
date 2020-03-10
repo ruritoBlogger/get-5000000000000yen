@@ -22,7 +22,6 @@ class CNN_observer():
             
             tmp_teach_data = data[i: i+self.vertical_len]
             tmp_ans_data = data[i+self.vertical_len+1]
-
             tmp_teach_data = self.transform_picture(tmp_teach_data)
             tmp_ans_data = self.transform_picture(tmp_ans_data)
 
@@ -35,12 +34,16 @@ class CNN_observer():
         picture_data = []
 
         if( type(data) == int ):
-            tmp_data = [0] * 10
+            #tmp_data = [0] * 10
+            tmp_data = []
+            if( len(str(data)) != 3 ):
+                for i in range( 3 - len(str(data)) ):
+                    tmp_data.append(0)
             
-            for j in range(len(str(data))):
-                key = int(str(data)[j])
-                tmp_data[key] += 1
-            
+            for i in range(len(str(data))):
+                key = int(str(data)[i])
+                #tmp_data[key] += 1
+                tmp_data.append(key)
             picture_data = tmp_data
         
         else:

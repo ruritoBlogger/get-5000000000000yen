@@ -1,11 +1,12 @@
 class Trainer():
 
-    def __init__(self, batch_size, epoch, slack, observer, updater, useSlack, loss_picture_name, acc_picture_name):
+    def __init__(self, batch_size, epoch, slack, observer, updater, useSlack, loss_picture_name, acc_picture_name, cnn_model_name):
         self.batch_size = batch_size
         self.epoch = epoch
         self.useSlack = useSlack
         self.loss_picture_name = loss_picture_name
         self.acc_picture_name = acc_picture_name
+        self.cnn_model_name = cnn_model_name
 
         self._slack = slack
         self._observer = observer
@@ -13,7 +14,6 @@ class Trainer():
 
         self.loss_list = []
         self.acc_list = []
-
 
     def learn(self):
         data = self.getData("./numbers.txt")
@@ -61,7 +61,7 @@ class Trainer():
         plt.savefig(self.acc_picture_name)
 
     def save_model(self):
-        self.updater.save()
+        self.updater.save(self.cnn_model_name)
 
     @property
     def slack(self):

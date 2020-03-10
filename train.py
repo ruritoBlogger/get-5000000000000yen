@@ -9,6 +9,7 @@ def main():
 
     loss_picture_name = "loss.png"
     accuracy_picture_name = "acc.png"
+    cnn_model_name = "model.npz"
 
     observer = Observer()
     updater = CNN_updater()
@@ -19,7 +20,7 @@ def main():
     token = os.environ.get("API_KEY")
     slack = SlackBot(token)
 
-    trainer = CNNTrainer(batch_size, epoch, slack, observer, updater, useSlack, loss_picture_name, accuracy_picture_name)
+    trainer = CNNTrainer(batch_size, epoch, slack, observer, updater, useSlack, loss_picture_name, accuracy_picture_name, cnn_model_name)
 
     trainer.learn()
 

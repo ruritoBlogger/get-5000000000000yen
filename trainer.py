@@ -43,10 +43,14 @@ class Trainer():
 
             self.loss_list.append(loss)
             self.acc_list.append(accuracy)
+            self.show_process(j+1, loss, accuracy)
             self.send_message(j)
 
         self.make_picture()
         self.save_model()
+
+    def show_process(self, epoch, loss, accuracy):
+        print("[{}] loss:{}, accuracy:{}".format(epoch, loss, accuracy))
 
     def send_message(self, episode):
         message = ""

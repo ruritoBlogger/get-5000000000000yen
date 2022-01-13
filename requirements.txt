@@ -58,7 +58,7 @@ pandocfilters==1.4.2
 parso==0.5.1
 pexpect==4.7.0
 pickleshare==0.7.5
-Pillow==6.2.1
+Pillow==9.0.0
 -e git+https://github.com/ntasfi/PyGame-Learning-Environment.git@3dbe79dc0c35559bb441b9359948aabf9bb3d331#egg=ple
 prometheus-client==0.7.1
 prompt-toolkit==2.0.10
